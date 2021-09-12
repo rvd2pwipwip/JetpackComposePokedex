@@ -41,6 +41,7 @@ import com.hdesrosiers.jetpackcomposepokedex.ui.theme.RobotoCondensed
 @Composable
 fun PokemonListScreen(
   navController: NavController,
+  viewModel: PokemonListViewModel = hiltNavGraphViewModel()
 ) {
   Surface(
     color = MaterialTheme.colors.background,
@@ -57,7 +58,9 @@ fun PokemonListScreen(
       )
       SearchBar(
         hint = "Search..."
-      )
+      ) {
+        viewModel.searchPokemonList(it)
+      }
       Spacer(modifier = Modifier.height(16.dp))
       PokemonList(navController = navController)
     }
@@ -95,7 +98,7 @@ fun SearchBar(
         .background(color = MaterialTheme.colors.surface, CircleShape)
         .padding(start = 20.dp, top = 14.dp, end = 20.dp)
         .onFocusChanged {
-          isHintDisplayed = it != FocusState.Active
+          isHintDisplayed = it != FocusState.Active && text.isNotEmpty()
         }
     )
     if (isHintDisplayed) {
@@ -118,14 +121,16 @@ fun PokemonList(
   val endReached by remember { viewModel.endReached }
   val loadError by remember { viewModel.loadError }
   val isLoading by remember { viewModel.isLoading }
+  val isSearching by remember { viewModel.isSearching }
 
   LazyColumn(
     contentPadding = PaddingValues(16.dp)
   ) {
+    // Paginate //
     val itemCount =
       if (pokemonList.size % 2 == 0) pokemonList.size / 2 else pokemonList.size / 2 + 1
     items(count = itemCount) { index ->
-      if (index >= itemCount -1 && !endReached) {
+      if (index >= itemCount -1 && !endReached && !isLoading && !isSearching) {
         viewModel.loadPokemonPaginated()
       }
       PokedexRow(
